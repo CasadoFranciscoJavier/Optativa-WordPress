@@ -86,7 +86,7 @@ function mdd_pagina_configuracion()
         update_option('mdd_frases', $frases);
 
         // Guardar estado del emoji (checkbox)
-        $emoji_activo = isset($_POST['mdd_emoji_activo']) ? true : false;
+        $emoji_activo = isset($_POST['mdd_emoji_activo']) ? true : false; // isset ya devuelve true o false, por lo que njo haria falta el codigo despues de la ?
         update_option('mdd_emoji_activo', $emoji_activo);
 
         echo '<div class="updated"><p>✅ Configuración guardada correctamente.</p></div>';
@@ -103,7 +103,7 @@ function mdd_pagina_configuracion()
         <p>Escribe una frase por línea. Se mostrará una diferente cada vez que se cargue la página.</p>
 
         <form method="post">
-            <?php wp_nonce_field('mdd_guardar_frases'); //sistema de seguridad llamado nonce (número único temporal). que hay que validar luego para impedir envíos no autorizado del formulario ?>
+            <?php wp_nonce_field('mdd_guardar_frases'); //Aquí se genera la clave y en la linea 78 check_admin_referer('mdd_guardar_frases') lo comprobamos. Sistema de seguridad llamado nonce (número único temporal). que hay que validar luego para impedir envíos no autorizado del formulario ?>
 
             <textarea name="mdd_frases" rows="10" cols="60"><?php echo esc_textarea($contenido); ?></textarea>
 
