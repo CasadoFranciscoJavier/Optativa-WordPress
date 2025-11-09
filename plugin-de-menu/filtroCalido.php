@@ -1,5 +1,15 @@
 <?php
 
+
+// Plugin 2 – Filtro cálido nocturno configurable
+// Crea un plugin que aplique un filtro amarillo o tono cálido a toda la web cuando sea de noche (por ejemplo, entre las 20:00 y las 07:00).
+
+// 👉 Añade un menú de configuración para que el usuario pueda personalizar:
+
+// La hora de inicio y hora de fin del modo nocturno.
+// La intensidad del filtro cálido (por ejemplo: suave, medio o fuerte).
+// El color exacto del filtro, usando un selector de color.
+
 /*
 Plugin Name: Filtro Cálido Nocturno
 Description: Aplifc un tono cálido a toda la web 
@@ -7,79 +17,93 @@ Version: 1.1
 Author: Javica
 */
 
-add_action('wp_head', 'aplifcr_filtro_nocturno');
+if ( !defined('ABSPATH') ) exit;
 
-function aplifcr_filtro_nocturno() {
-    date_default_timezone_set('Europe/Madrid'); // Ajusta según tu zona
-    $hora_actual = date('H');
+// require_once "fla_admin_menu.php";  por si queremos hacer esta primera parte en otro archivo diferente
 
-    if ($hora_actual >= 8 || $hora_actual < 12) {
-        echo '
-        <style>
-            body, html {
-                filter: sepia(30%) hue-rotate(-15deg) brightness(110%) saturate(120%);
-                background-color: #fff8e1 !important;
-            }
+function fla_aplicar_filtro_luz() {
 
-            /* También forzamos el filtro en la barra admin si está visible */
-            #wpadminbar {
-                filter: sepia(35%) hue-rotate(-15deg) brightness(110%) saturate(120%);
-            }
-        </style>
-        ';
+    $FLA_HORA_INICIO = get_option("fla_hora_inicio");
+    $FLA_HORA_FIN = get_option("fla_hora_fin");
+    $fla_color = get_option("fla_color");
+    $fla_intensidad = get_option("fla_intensidad");
+
+    $fla_hora_actual = date("H");
+    if ($fla_hora_actual >= $FLA_HORA_INICIO || $fla_hora_actual <= $FLA_HORA_FIN){
+        echo "<div style='
+                position: fixed; 
+                top: 0; 
+                left: 0; 
+                width: 100dvw; 
+                height: 100dvh; 
+                background-color: $fla_color; 
+                opacity: $fla_intensidad; 
+                pointer-events: none'>
+             </div>";
     }
 }
+
+// Enganchar la función al evento del pie
+add_action('wp_footer', 'fla_aplicar_filtro_luz');
 
 // ======================= MENÚ DEL PLUGIN ======================= //
-function fc_crear_menu()
-{
+function fla_crear_menu() {
     add_menu_page(
-        'Filtro de luz',
-        'Filtro de luz',
+        'Filtro de Luz Azul',
+        'Filtro de Luz Azul',
         'manage_options',
-        'filtro-de-luz',
-        'fc_pagina_configuracion'
+        'filtro-luz-azul',
+        'fla_pagina_configuracion'
     );
 }
-add_action('admin_menu', 'fc_crear_menu');
 
-// ======================= PÁGINA DE CONFIGURACIÓN ======================= //
-function fc_pagina_configuracion()
-{
-    // Guardar configuración
-    if (isset($_POST['fc_filtro_marfc']) && check_admin_referer('fc_guardar_filtro')) {
-        $filtro = sanitize_text_field($_POST['fc_filtro_marfc']);
-        update_option('fc_filtro_marfc', $filtro);
+function fla_pagina_configuracion() {
 
-        $alineacion = sanitize_text_field($_POST['fc_alineacion']);
-        update_option('fc_alineacion', $alineacion);
+    // Si el formulario fue enviadoy el código generado con wp_nonce_field es correcto ...
+    if ( isset($_POST['fla_hora_inicio']) && check_admin_referer('fla_configuracion') ) {
 
-        echo '<div class="updated"><p>✅ Configuración guardada correctamente.</p></div>';
+        $fla_hora_inicio = $_POST["fla_hora_inicio"];
+        $fla_hora_fin = $_POST["fla_hora_fin"];
+        $fla_color = $_POST["fla_color"];
+        $fla_intensidad = $_POST["fla_intensidad"];
+
+        update_option('fla_hora_inicio', $fla_hora_inicio);
+        update_option('fla_hora_fin', $fla_hora_fin);
+        update_option('fla_color', $fla_color);
+        update_option('fla_intensidad', $fla_intensidad);
+
+        echo '<div class="updated"><p>✅ Frases guardadas correctamente.</p></div>';
     }
 
-    // Leer valores actuales
-    $filtro_actual = get_option('fc_filtro_marfc', '');
-    $alineacion_actual = get_option('fc_alineacion', 'center');
+    $fla_hora_inicio = get_option("fla_hora_inicio");
+    $fla_hora_fin = get_option("fla_hora_fin");
+    $fla_color = get_option("fla_color");
+    $fla_intensidad = get_option("fla_intensidad");
+
     ?>
+
     <div class="wrap">
-        <h1>Aplicar filtro cálido</h1>
-        <p>Escribe el filtro de tu empresa o tu filtro personal y elige cómo se alineará el texto en el pie de página.</p>
+        <h1>Configuración: Filtro</h1>
+        <p>Elige un color e intensidad para el filtro de tu página.</p>
 
         <form method="post">
-            <?php wp_nonce_field('fc_guardar_filtro'); ?>
+            <?php wp_nonce_field('fla_configuracion');?>
+            
+            <label>Hora de inicio: <input name="fla_hora_inicio" type="number" min="00" max="23" value="<?php echo $fla_hora_inicio ?>"></label><br>
+            
+            <label>Hora de Fin: <input name="fla_hora_fin" type="number" min="00" max="23" value="<?php echo $fla_hora_fin ?>"></label><br>
 
-            <p><strong>Aplicar filtro:</strong></p>
-            <input type="text" name="fc_filtro" value="<?php echo esc_attr($filtro_actual); ?>" style="width: 300px;">
-            <br><br>
+            <label>Color: <input name="fla_color" type="color" value="<?php echo $fla_color ?>"></label><br>
 
-            <p><strong>Alineación del texto:</strong></p>
-            <label><input type="radio" name="fc_alineacion" value="left" <?php checked($alineacion_actual, 'left'); ?>> Izquierda</label><br>
-            <label><input type="radio" name="fc_alineacion" value="center" <?php checked($alineacion_actual, 'center'); ?>> Centrada</label><br>
-            <label><input type="radio" name="fc_alineacion" value="right" <?php checked($alineacion_actual, 'right'); ?>> Derecha</label>
-            <br><br>
+            <label>Intensidad: <input name="fla_intensidad" type="range" min="0" max="1" step="0.01" value="<?php echo $fla_intensidad ?>"></label><br>
 
-            <input type="submit" class="button-primary" value="Guardar configuración">
+            <input type="submit" class="button-primary" value="Guardar configuracion">
         </form>
     </div>
+
     <?php
 }
+
+add_action('admin_menu', 'fla_crear_menu');
+
+
