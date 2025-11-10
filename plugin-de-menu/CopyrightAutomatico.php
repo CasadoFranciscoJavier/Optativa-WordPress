@@ -14,6 +14,7 @@ function ca_mensaje_pie()
     // Recuperamos las opciones guardadas
     $ca_nombre_marca = get_option('ca_nombre_marca', '');
     $ca_alineacion = get_option('ca_alineacion', 'center'); // valor por defecto centrado
+    $ca_color = get_option('ca_color', '#000000'); // valor por defecto negro
     $ca_anio = date("Y");
 
     // Determinar el estilo de alineación
@@ -24,6 +25,9 @@ function ca_mensaje_pie()
     } else {
         $estilo = 'text-align:center;';
     }
+
+    // Añadir el color al estilo
+    $estilo .= "color: $ca_color;";
 
     // Mostrar el mensaje con estilo
     if (!empty($ca_nombre_marca)) {
@@ -58,12 +62,16 @@ function ca_pagina_configuracion()
         $alineacion = sanitize_text_field($_POST['ca_alineacion']);
         update_option('ca_alineacion', $alineacion);
 
+        $color = sanitize_hex_color($_POST['ca_color']);
+        update_option('ca_color', $color);
+
         echo '<div class="updated"><p>✅ Configuración guardada correctamente.</p></div>';
     }
 
     // Leer valores actuales
     $nombre_actual = get_option('ca_nombre_marca', '');
     $alineacion_actual = get_option('ca_alineacion', 'center');
+    $color_actual = get_option('ca_color', '#000000');
     ?>
     <div class="wrap">
         <h1>Configuración del Copyright Automático</h1>
@@ -80,6 +88,10 @@ function ca_pagina_configuracion()
             <label><input type="radio" name="ca_alineacion" value="left" <?php checked($alineacion_actual, 'left'); ?>> Izquierda</label><br>
             <label><input type="radio" name="ca_alineacion" value="center" <?php checked($alineacion_actual, 'center'); ?>> Centrada</label><br>
             <label><input type="radio" name="ca_alineacion" value="right" <?php checked($alineacion_actual, 'right'); ?>> Derecha</label>
+            <br><br>
+
+            <p><strong>Color del texto:</strong></p>
+            <input type="color" name="ca_color" value="<?php echo esc_attr($color_actual); ?>">
             <br><br>
 
             <input type="submit" class="button-primary" value="Guardar configuración">
